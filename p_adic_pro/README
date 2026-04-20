@@ -1,0 +1,64 @@
+# p-adic Converter
+
+一个在终端运行的 p-adic 数转换工具，支持整数、有理数的 p-adic 展开，以及 p-adic 平方根计算。
+
+## 功能
+
+- 整数转换为 p-adic 表示
+- 有理数转换为 p-adic 表示
+- p-adic 平方根计算（基于 Hensel 引理）
+- 表达式求值并转换为 p-adic
+- 交互式命令行界面
+
+## 环境要求
+
+- macOS 或 Linux
+- gcc
+- make
+
+## 安装方法
+
+```bash
+# 1. 下载项目
+git clone https://github.com/你的用户名/p-adic.git
+
+# 2. 进入项目目录
+cd p-adic
+
+# 3. 运行安装脚本
+bash install.sh
+```
+
+安装完成后即可在终端直接使用：
+
+```bash
+smc-padic
+```
+
+## 使用方法
+
+启动后进入交互模式，支持以下输入格式：
+
+```
+# 整数转换
+5 7          → 5 的 7-adic 表示
+
+# 有理数转换
+1/3 5        → 1/3 的 5-adic 表示
+
+# 平方根
+sqrt(2) 5    → √2 的 5-adic 表示
+pow(2,1/2) 5 → 同上
+
+# 特殊命令
+help         → 查看帮助
+menu         → 打开主菜单
+quit / exit  → 退出
+```
+
+## 卸载方法
+
+```bash
+sudo rm /usr/local/bin/smc-padic
+sudo rm /usr/local/bin/padic_converter
+```
