@@ -20,7 +20,7 @@
 
 ```bash
 # 1. 下载项目
-git clone https://github.com/你的用户名/p-adic.git
+git clone https://github.com/Chimona-Muxi/p-adic.git
 
 # 2. 进入项目目录
 cd p-adic
