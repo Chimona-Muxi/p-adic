@@ -1,94 +1,94 @@
 # p-adic Converter
 
-一个在终端运行的 p-adic 数转换工具，支持整数、有理数的 p-adic 展开，以及 p-adic 平方根计算。
+A terminal-based p-adic number conversion tool supporting integer and rational p-adic expansions, as well as p-adic square root computation.
 
-## 功能
+## Features
 
-- 整数转换为 p-adic 表示
-- 有理数转换为 p-adic 表示
-- p-adic 平方根计算（基于 Hensel 引理）
-- 表达式求值并转换为 p-adic
-- 交互式命令行界面
-- 支持 9 种语言（英/简中/繁中/日/韩/法/俄/西/德）
+- Integer to p-adic conversion
+- Rational number to p-adic conversion
+- p-adic square root computation (via Hensel's Lemma)
+- Expression evaluation and p-adic conversion
+- Interactive command-line interface
+- Supports 9 languages (EN / ZH-CN / ZH-TW / JA / KO / FR / RU / ES / DE)
 
-## 环境要求
+## Requirements
 
-| 系统 | 要求 |
-|------|------|
-| macOS | gcc, make（运行 `xcode-select --install`）|
-| Linux | gcc, make（`sudo apt install gcc make`）|
-| Windows | MinGW (gcc + make)，见下方说明 |
+| System | Requirements |
+|--------|-------------|
+| macOS | gcc, make (run `xcode-select --install`) |
+| Linux | gcc, make (`sudo apt install gcc make`) |
+| Windows | MinGW (gcc + make), see instructions below |
 
-## 安装方法
+## Installation
 
 ### macOS / Linux
 
 ```bash
-# 1. 克隆项目
+# 1. Clone the repository
 git clone https://github.com/Chimona-Muxi/p-adic.git
 
-# 2. 进入项目目录
+# 2. Enter the project directory
 cd p-adic/p_adic_pro
 
-# 3. 运行安装脚本
+# 3. Run the install script
 bash install.sh
 ```
 
 ### Windows
 
-**前置要求：安装 MinGW**
-1. 前往 https://www.mingw-w64.org/downloads/ 下载安装
-2. 将 MinGW 的 bin 目录（如 `C:\mingw64\bin`）添加到系统 PATH
+**Prerequisite: Install MinGW**
+1. Download and install MinGW from https://www.mingw-w64.org/downloads/
+2. Add the MinGW bin directory (e.g. `C:\mingw64\bin`) to your system PATH
 
-**安装 p-adic：**
-1. 下载本项目（点击页面右上角 Code → Download ZIP）
-2. 解压后进入 `p_adic_pro` 文件夹
-3. 在命令提示符中执行：
+**Install p-adic:**
+1. Download this project (click Code → Download ZIP on the top right)
+2. Extract and navigate to the `p_adic_pro` folder
+3. Run in Command Prompt:
 ```bat
 install.bat
 ```
-4. 重启终端后输入 `smc-padic` 即可使用
+4. Restart your terminal and type `smc-padic` to use
 
-### Windows 用户（WSL 方式，推荐）
+### Windows (WSL method, recommended)
 
-如果不想安装 MinGW，可以使用 WSL：
+If you prefer not to install MinGW, use WSL instead:
 
 ```powershell
-# 以管理员身份在 PowerShell 中运行
+# Run in PowerShell as Administrator
 wsl --install
 ```
 
-重启后打开 WSL 终端，按照 macOS/Linux 步骤操作即可。
+After restarting, open a WSL terminal and follow the macOS/Linux steps above.
 
-## 使用方法
+## Usage
 
-安装完成后，在终端输入：
+After installation, run:
 
 ```bash
 smc-padic
 ```
 
-启动后进入交互模式，支持以下输入格式：
+This launches an interactive mode with the following input formats:
 
 ```
-# 整数转换
-5 7          → 5 的 7-adic 表示
+# Integer conversion
+5 7          → 5 in 7-adic representation
 
-# 有理数转换
-1/3 5        → 1/3 的 5-adic 表示
+# Rational conversion
+1/3 5        → 1/3 in 5-adic representation
 
-# 平方根
-sqrt(2) 5    → √2 的 5-adic 表示
-pow(2,1/2) 5 → 同上
+# Square root
+sqrt(2) 5    → √2 in 5-adic representation
+pow(2,1/2) 5 → same as above
 
-# 特殊命令
-help         → 查看帮助
-language     → 查看当前语言
-menu         → 打开主菜单
-quit / exit  → 退出
+# Commands
+help         → show help
+language     → show current language
+menu         → open main menu
+quit / exit  → exit
 ```
 
-## 卸载方法
+## Uninstallation
 
 ### macOS / Linux
 ```bash
@@ -98,8 +98,8 @@ rm ~/.padic_config
 ```
 
 ### Windows
-删除安装目录（默认 `C:\p-adic`），并从系统 PATH 中移除该路径，同时删除 `%USERPROFILE%\.padic_config`。
+Delete the installation directory (default: `C:\p-adic`), remove it from your system PATH, and delete `%USERPROFILE%\.padic_config`.
 
-## 关于项目名称
+## About the Name
 
-p-adic 数是数学中的一种数系，由 Kurt Hensel 在 1897 年引入。本工具实现了 p-adic 数的基本运算和展开，包括基于 Hensel 引理的平方根提升算法。
+p-adic numbers are a number system introduced by Kurt Hensel in 1897. This tool implements basic p-adic arithmetic and expansion, including a square root lifting algorithm based on Hensel's Lemma.
