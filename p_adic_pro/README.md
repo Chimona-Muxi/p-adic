@@ -31,13 +31,8 @@
 ### macOS / Linux
 
 ```bash
-# 1. 克隆项目
-git clone https://github.com/Chimona-Muxi/p-adic.git
-
-# 2. 进入项目目录
+git clone -b main2.0 https://github.com/Chimona-Muxi/p-adic.git
 cd p-adic/p_adic_pro
-
-# 3. 运行安装脚本
 bash install.sh
 ```
 
