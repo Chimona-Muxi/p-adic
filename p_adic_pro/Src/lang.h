@@ -73,6 +73,18 @@ typedef enum {
 
     STR_ROOT_RESULT_TITLE,   // "方根运算结果 (精度: %d位)"
 
+    STR_CALC_EXP,            // "Computing: exp(%d/%d) in %d-adic"
+    STR_CALC_LOG,            // "Computing: log(%d/%d) in %d-adic"
+    STR_ERR_EXP_FORMAT,      // "Format error. Usage: exp(x) p"
+    STR_ERR_LOG_FORMAT,      // "Format error. Usage: log(x) p"
+    STR_ERR_EXP_DIVERGE,     // "exp(x) does not converge in Q_p: need v_p(x) >= 1 (>=2 if p=2)"
+    STR_ERR_LOG_DIVERGE,     // "log(x) does not converge in Q_p: need x ≡ 1 (mod p)"
+    STR_ERR_EXPR_TO_PADIC,   // "Failed to convert expression to p-adic"
+    STR_EXP_RESULT,          // "exp result:"
+    STR_LOG_RESULT,          // "log result:"
+    STR_HELP_4,              // "  4. exp(x) p / log(x) p  (e.g. exp(5) 5)"
+    STR_HELP_EXPR,           // "  5. expression p         (e.g. 3+4*2 5, (1/3+1)*2 5)"
+
     STR_COUNT
 } StrIndex;
 

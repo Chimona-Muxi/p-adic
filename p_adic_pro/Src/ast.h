@@ -15,6 +15,8 @@ typedef enum {
     NODE_NEG,
     NODE_SQRT,
     NODE_POW,
+    NODE_EXP,
+    NODE_LOG,
     NODE_PAREN
 } NodeType;
 
@@ -39,7 +41,8 @@ typedef struct ASTNode {
 // 词法分析相关结构
 typedef enum {
     TOKEN_NUMBER, TOKEN_PLUS, TOKEN_MINUS, TOKEN_MUL, TOKEN_DIV,
-    TOKEN_SQRT, TOKEN_POW, TOKEN_LPAREN, TOKEN_RPAREN, TOKEN_VARIABLE,
+    TOKEN_SQRT, TOKEN_POW, TOKEN_EXP, TOKEN_LOG, TOKEN_COMMA,
+    TOKEN_LPAREN, TOKEN_RPAREN, TOKEN_VARIABLE,
     TOKEN_END, TOKEN_ERROR
 } TokenType;
 
@@ -63,6 +66,11 @@ ASTNode* parse(const char* input);
 void free_ast(ASTNode* node);
 int evaluate_ast(ASTNode* node);
 RationalNumber evaluate_ast_as_rational(ASTNode* node);
+// 返回 true 表示求值成功；false 表示 AST 中含有需要 p-adic 专用处理的节点
+// (sqrt / exp / log / 非整数指数的 pow / 变量) 或运算出错 (例如除零)
+bool evaluate_ast_safe(ASTNode* node, RationalNumber* out);
+// 是否为纯有理表达式 (只含 +-*/ 与括号和可立即求值的 pow)
+bool ast_is_rational_only(ASTNode* node);
 void print_ast(ASTNode* node, int indent);
 void ast_to_string(ASTNode* node, char* buffer, int* pos);
 
@@ -75,6 +83,8 @@ ASTNode* parse_expression(ParserState* state);
 ASTNode* parse_term(ParserState* state);
 ASTNode* parse_factor(ParserState* state);
 ASTNode* parse_sqrt(ParserState* state);
+ASTNode* parse_pow(ParserState* state);
+ASTNode* parse_unary_func(ParserState* state, NodeType type);
 
 // 节点创建函数
 ASTNode* create_number_node(int value);

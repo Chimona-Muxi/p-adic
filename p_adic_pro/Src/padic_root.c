@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <stdbool.h>
+#include <limits.h>
 
 static char digit_to_char_local(int digit) {
     if (digit >= 0 && digit <= 9) return '0' + digit;
@@ -194,4 +195,114 @@ void print_padic_root_result(PAdicNumber* n, PAdicNumber* root, int exponent, in
     }
     if (first) printf("0");
     printf("\n");
+}
+
+// ===== p-adic 指数函数 =====
+// exp(x) = sum_{n>=0} x^n / n!
+// 收敛条件: v_p(x) >= 1  (p>2)，或 v_p(x) >= 2 (p=2)
+PAdicNumber* padic_exp(PAdicNumber* x, int p, int digits) {
+    if (x == NULL) return NULL;
+
+    int v = padic_valuation_of(x);
+    int min_v = (p == 2) ? 2 : 1;
+
+    if (v == INT_MAX) return int_to_padic(1, p, digits); // exp(0) = 1
+    if (v < min_v) return NULL;
+
+    // 内部多算若干位以吸收 min_power 漂移
+    int work = digits + 12;
+
+    // 将 x 拓展到 work 位
+    PAdicNumber* xw = padic_truncate(x, work);
+
+    PAdicNumber* result = int_to_padic(1, p, work);
+    PAdicNumber* term   = int_to_padic(1, p, work);
+
+    int max_iter = digits * 4 + 50;
+    for (int n = 1; n <= max_iter; n++) {
+        PAdicNumber* t1 = padic_mul(term, xw, work);
+        free_padic(term);
+        term = padic_div_int(t1, n, work);
+        free_padic(t1);
+        if (term == NULL) break;
+
+        int tv = padic_valuation_of(term);
+        if (tv >= digits) break;
+
+        PAdicNumber* nr = padic_add(result, term, work);
+        free_padic(result);
+        result = nr;
+    }
+
+    free_padic(term);
+    free_padic(xw);
+
+    padic_normalize(result);
+    PAdicNumber* trimmed = padic_truncate(result, digits);
+    free_padic(result);
+    return trimmed;
+}
+
+// ===== p-adic 对数函数 =====
+// log(x) = log(1+y), 其中 y = x - 1
+// 要求 v_p(y) >= 1 (p>2) 或 v_p(y) >= 2 (p=2)
+// log(1+y) = sum_{n>=1} (-1)^(n+1) y^n / n
+PAdicNumber* padic_log(PAdicNumber* x, int p, int digits) {
+    if (x == NULL) return NULL;
+
+    int work = digits + 12;
+
+    PAdicNumber* xw  = padic_truncate(x, work);
+    PAdicNumber* one = int_to_padic(1, p, work);
+    PAdicNumber* y   = padic_sub(xw, one, work);
+    free_padic(one);
+    free_padic(xw);
+
+    int v = padic_valuation_of(y);
+    int min_v = (p == 2) ? 2 : 1;
+
+    if (v == INT_MAX) {
+        free_padic(y);
+        return int_to_padic(0, p, digits);
+    }
+    if (v < min_v) {
+        free_padic(y);
+        return NULL;
+    }
+
+    PAdicNumber* result = int_to_padic(0, p, work);
+    PAdicNumber* y_pow  = padic_clone(y);  // y^1
+
+    int max_iter = digits * 4 + 50;
+
+    for (int n = 1; n <= max_iter; n++) {
+        PAdicNumber* term = padic_div_int(y_pow, n, work);
+        if (term == NULL) break;
+
+        if ((n & 1) == 0) {
+            PAdicNumber* t2 = padic_neg(term, work);
+            free_padic(term);
+            term = t2;
+        }
+
+        int tv = padic_valuation_of(term);
+        if (tv >= digits) { free_padic(term); break; }
+
+        PAdicNumber* nr = padic_add(result, term, work);
+        free_padic(result);
+        result = nr;
+        free_padic(term);
+
+        PAdicNumber* np = padic_mul(y_pow, y, work);
+        free_padic(y_pow);
+        y_pow = np;
+    }
+
+    free_padic(y_pow);
+    free_padic(y);
+
+    padic_normalize(result);
+    PAdicNumber* trimmed = padic_truncate(result, digits);
+    free_padic(result);
+    return trimmed;
 }

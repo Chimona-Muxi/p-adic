@@ -24,13 +24,8 @@ A terminal-based p-adic number conversion tool supporting integer and rational p
 ### macOS / Linux
 
 ```bash
-# 1. Clone the repository
-git clone https://github.com/Chimona-Muxi/p-adic.git
-
-# 2. Enter the project directory
+git clone -b main2.0 https://github.com/Chimona-Muxi/p-adic.git
 cd p-adic/p_adic_pro
-
-# 3. Run the install script
 bash install.sh
 ```
 

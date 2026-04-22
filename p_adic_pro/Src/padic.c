@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <limits.h>
+#include <ctype.h>
 
 // 将数字转换为字符（0-9用数字，10-35用字母A-Z）
 static char digit_to_char(int digit) {
@@ -476,4 +478,215 @@ void free_padic(PAdicNumber* padic) {
     if (padic == NULL) return;
     if (padic->digits != NULL) free(padic->digits);
     free(padic);
+}
+
+// ===== 新增：p-adic 基本算术 =====
+
+PAdicNumber* padic_clone(PAdicNumber* a) {
+    if (a == NULL) return NULL;
+    PAdicNumber* r = (PAdicNumber*)malloc(sizeof(PAdicNumber));
+    r->p = a->p;
+    r->length = a->length;
+    r->min_power = a->min_power;
+    r->is_negative = a->is_negative;
+    r->digits = (int*)malloc(a->length * sizeof(int));
+    memcpy(r->digits, a->digits, a->length * sizeof(int));
+    return r;
+}
+
+bool padic_is_zero(PAdicNumber* a) {
+    if (a == NULL) return true;
+    for (int i = 0; i < a->length; i++) if (a->digits[i] != 0) return false;
+    return true;
+}
+
+int padic_valuation_of(PAdicNumber* a) {
+    if (a == NULL) return INT_MAX;
+    for (int i = 0; i < a->length; i++) {
+        if (a->digits[i] != 0) return a->min_power + i;
+    }
+    return INT_MAX;
+}
+
+void padic_normalize(PAdicNumber* a) {
+    if (a == NULL || a->length == 0) return;
+    int shift = 0;
+    while (shift < a->length && a->digits[shift] == 0) shift++;
+    if (shift == 0) return;
+    if (shift == a->length) {
+        // 全零
+        a->min_power = 0;
+        return;
+    }
+    for (int i = 0; i < a->length - shift; i++) {
+        a->digits[i] = a->digits[i + shift];
+    }
+    for (int i = a->length - shift; i < a->length; i++) {
+        a->digits[i] = 0;
+    }
+    a->min_power += shift;
+}
+
+PAdicNumber* padic_truncate(PAdicNumber* a, int new_length) {
+    if (a == NULL) return NULL;
+    PAdicNumber* r = (PAdicNumber*)malloc(sizeof(PAdicNumber));
+    r->p = a->p;
+    r->length = new_length;
+    r->min_power = a->min_power;
+    r->is_negative = a->is_negative;
+    r->digits = (int*)calloc(new_length, sizeof(int));
+    int n = (new_length < a->length) ? new_length : a->length;
+    for (int i = 0; i < n; i++) r->digits[i] = a->digits[i];
+    return r;
+}
+
+PAdicNumber* padic_add(PAdicNumber* a, PAdicNumber* b, int max_digits) {
+    int p = a->p;
+    int min_pow = (a->min_power < b->min_power) ? a->min_power : b->min_power;
+
+    PAdicNumber* r = (PAdicNumber*)malloc(sizeof(PAdicNumber));
+    r->p = p;
+    r->length = max_digits;
+    r->min_power = min_pow;
+    r->is_negative = false;
+    r->digits = (int*)calloc(max_digits, sizeof(int));
+
+    int a_off = a->min_power - min_pow;
+    int b_off = b->min_power - min_pow;
+    long long carry = 0;
+    for (int i = 0; i < max_digits; i++) {
+        int ai = i - a_off, bi = i - b_off;
+        int ad = (ai >= 0 && ai < a->length) ? a->digits[ai] : 0;
+        int bd = (bi >= 0 && bi < b->length) ? b->digits[bi] : 0;
+        long long s = (long long)ad + bd + carry;
+        r->digits[i] = (int)(s % p);
+        carry = s / p;
+    }
+    return r;
+}
+
+PAdicNumber* padic_sub(PAdicNumber* a, PAdicNumber* b, int max_digits) {
+    PAdicNumber* nb = padic_neg(b, max_digits);
+    PAdicNumber* r  = padic_add(a, nb, max_digits);
+    free_padic(nb);
+    return r;
+}
+
+PAdicNumber* padic_mul(PAdicNumber* a, PAdicNumber* b, int max_digits) {
+    int p = a->p;
+    PAdicNumber* r = (PAdicNumber*)malloc(sizeof(PAdicNumber));
+    r->p = p;
+    r->length = max_digits;
+    r->min_power = a->min_power + b->min_power;
+    r->is_negative = false;
+    r->digits = (int*)calloc(max_digits, sizeof(int));
+
+    long long* tmp = (long long*)calloc(max_digits, sizeof(long long));
+    for (int i = 0; i < a->length && i < max_digits; i++) {
+        if (a->digits[i] == 0) continue;
+        for (int j = 0; j < b->length && i + j < max_digits; j++) {
+            tmp[i + j] += (long long)a->digits[i] * b->digits[j];
+        }
+    }
+    long long carry = 0;
+    for (int i = 0; i < max_digits; i++) {
+        long long v = tmp[i] + carry;
+        r->digits[i] = (int)(v % p);
+        carry = v / p;
+    }
+    free(tmp);
+    return r;
+}
+
+// 用长除法计算 1/m 的 p-adic 展开；要求 gcd(m, p) == 1
+static void padic_inverse_int(int m, int p, int N, int* out_digits) {
+    int m_mod_p = ((m % p) + p) % p;
+    // 由费马小定理得 m 在 mod p 下的逆元
+    int inv_m_mod_p = 1;
+    int base = m_mod_p;
+    int e = p - 2;
+    while (e > 0) {
+        if (e & 1) inv_m_mod_p = (int)((long long)inv_m_mod_p * base % p);
+        base = (int)((long long)base * base % p);
+        e >>= 1;
+    }
+
+    for (int i = 0; i < N; i++) out_digits[i] = 0;
+
+    long long rem = 1;
+    for (int i = 0; i < N; i++) {
+        long long ri = rem % p;
+        if (ri < 0) ri += p;
+        int qi = (int)((ri * inv_m_mod_p) % p);
+        out_digits[i] = qi;
+        rem = (rem - (long long)m * qi) / p;
+    }
+}
+
+PAdicNumber* padic_div_int(PAdicNumber* a, int n, int max_digits) {
+    if (n == 0) return NULL;
+
+    int p = a->p;
+    bool neg = (n < 0);
+    int m = neg ? -n : n;
+
+    int k = 0;
+    while (m % p == 0) { k++; m /= p; }
+
+    int* inv = (int*)malloc(max_digits * sizeof(int));
+    padic_inverse_int(m, p, max_digits, inv);
+
+    PAdicNumber inv_pn;
+    inv_pn.p = p;
+    inv_pn.digits = inv;
+    inv_pn.length = max_digits;
+    inv_pn.min_power = 0;
+    inv_pn.is_negative = false;
+
+    PAdicNumber* r = padic_mul(a, &inv_pn, max_digits);
+    r->min_power -= k;
+
+    free(inv);
+
+    if (neg) {
+        PAdicNumber* nr = padic_neg(r, max_digits);
+        free_padic(r);
+        r = nr;
+    }
+    return r;
+}
+
+// 严格解析：要求字符串整体是 "a" 或 "a/b"
+RationalNumber* parse_rational_strict(const char* input) {
+    if (input == NULL) return NULL;
+    while (*input == ' ' || *input == '\t') input++;
+    if (*input == '\0') return NULL;
+
+    const char* p = input;
+    int sign = 1;
+    if (*p == '+' || *p == '-') { if (*p == '-') sign = -1; p++; }
+    if (!isdigit((unsigned char)*p)) return NULL;
+
+    long long num = 0;
+    while (isdigit((unsigned char)*p)) { num = num * 10 + (*p - '0'); p++; }
+    num *= sign;
+
+    long long den = 1;
+    if (*p == '/') {
+        p++;
+        int sign2 = 1;
+        if (*p == '+' || *p == '-') { if (*p == '-') sign2 = -1; p++; }
+        if (!isdigit((unsigned char)*p)) return NULL;
+        den = 0;
+        while (isdigit((unsigned char)*p)) { den = den * 10 + (*p - '0'); p++; }
+        if (den == 0) return NULL;
+        den *= sign2;
+    }
+    while (*p == ' ' || *p == '\t') p++;
+    if (*p != '\0') return NULL;
+
+    RationalNumber* r = (RationalNumber*)malloc(sizeof(RationalNumber));
+    r->numerator   = (int)num;
+    r->denominator = (int)den;
+    return r;
 }
